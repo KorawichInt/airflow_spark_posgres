@@ -22,49 +22,32 @@ print("######################################")
 print("READING POSTGRES TABLES")
 print("######################################")
 
-df_movies = (
+df_prompts = (
     spark.read
     .format("jdbc")
     .option("url", postgres_db)
-    .option("dbtable", "public.movies")
+    .option("dbtable", "public.prompts")
     .option("user", postgres_user)
     .option("password", postgres_pwd)
     .load()
 )
 
-df_ratings = (
-    spark.read
-    .format("jdbc")
-    .option("url", postgres_db)
-    .option("dbtable", "public.ratings")
-    .option("user", postgres_user)
-    .option("password", postgres_pwd)
-    .load()
-)
-
-####################################
-# Tpo 10 movies with more ratings
-####################################
-df_movies = df_movies.alias("m")
-df_ratings = df_ratings.alias("r")
-
-df_join = df_ratings.join(df_movies, df_ratings.movieId ==
-                          df_movies.movieId).select("r.*", "m.title")
-
+# Limit to first 10 rows
+# df_result = df_prompts.limit(10)
 df_result = (
-    df_join
-    .groupBy("title")
-    .agg(
-        F.count("timestamp").alias("qty_ratings"), F.mean(
-            "rating").alias("avg_rating")
-    )
-    .sort(F.desc("qty_ratings"))
+    df_prompts
     .limit(10)
 )
 
 print("######################################")
-print("EXECUTING QUERY AND SAVING RESULTS")
+print("EXECUTING QUERY AND SHOWING RESULTS")
 print("######################################")
-# Save result to a CSV file
+
+# Show the result in logs (this will be displayed in Airflow task logs)
+df_result.show()
+
+# Save result to a CSV file for potential further review
 df_result.coalesce(1).write.format("csv").mode("overwrite").save(
-    "/usr/local/spark/assets/data/output_postgres", header=True)
+    "/usr/local/spark/assets/data/output_postgre_prompts", header=True
+    # "/src/spark/assets/data/output_postgre_prompts", header=True
+)

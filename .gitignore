@@ -226,3 +226,5 @@ licenses/LICENSES-ui.txt
 # Generated out dir
 
 /out
+
+src/spark/assets/data/output_postgres/*
